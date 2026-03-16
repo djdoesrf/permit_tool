@@ -1,0 +1,1 @@
+window.DISTRICT_REGISTRY = window.DISTRICT_REGISTRY || [];

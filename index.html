@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Colorado ERCES/BDA Permit + Report Submission Guide</title>
+  
+
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>Colorado ERCES / BDA Permit + Report Submission Guide</h1>
+    <p class="sub">
+      Practical checklist for both permit packages and recurring report delivery (annual / ITM / grid-report workflows), with naming guidance and AHJ-specific routing notes.
+      Recompiled from this thread with an explicit split between permit submission versus report submission.
+    </p>
+    <div class="meta" style="margin-top:10px">
+      <span class="pill ok">v2.2.0_report_submission_rebuild_2026-03-04</span>
+      <span class="pill">Scope: Permit + annual report routing guidance</span>
+      <span class="pill warn">Not legal advice / verify with AHJ</span>
+      <span class="pill">Designed for Triple-C style workflow</span>
+    </div>
+  </section>
+
+  <div class="grid grid-2" style="margin-top:14px;">
+    <section class="card">
+      <div class="controls">
+        <input id="search" class="full" type="search" placeholder="Filter districts/items (e.g., Denver, annual report, Compliance Engine, IROL, naming, RF grid)..." />
+        <button id="toggleVerification">Hide Verify Flags</button>
+        <button id="expandAll">Expand All</button>
+        <button id="collapseAll">Collapse All</button>
+      </div>
+      <div class="softline"></div>
+      <div class="statusbar">
+        <div class="kpi"><strong id="kpiDistricts">0</strong><div class="small">Districts</div></div>
+        <div class="kpi"><strong id="kpiItems">0</strong><div class="small">Checklist Items</div></div>
+        <div class="kpi"><strong id="kpiDone">0</strong><div class="small">Checked Off</div></div>
+        <button id="resetChecks" title="Clear all saved checkbox state">Reset Checks</button>
+      </div>
+
+      <div id="districtContainer"></div>
+    </section>
+
+    <aside class="grid">
+
+<section class="card" id="pbCard">
+  <h3>Permit Package Wizard</h3>
+  <div class="small">
+    Choose an AHJ + process stage, then attach PDFs/images per checklist item and export a merged submittal package PDF.
+  </div>
+  <div class="pbrow" style="margin-top:10px">
+    <select id="pbDistrictSelect" aria-label="District"></select>
+    <select id="pbStageSelect" aria-label="Stage"></select>
+    <button id="pbOpenBtn" class="pbbtn full">Open Wizard</button>
+  </div>
+  <div class="softline"></div>
+  <div class="small">
+    Export supports <span class="mono">PDF</span> + <span class="mono">PNG/JPG</span>. Naming is handled via fields/templates (no naming “page” is inserted into the PDF).
+  </div>
+</section>
+
+<dialog id="pbDialog">
+  <div class="pbTop">
+    <div class="left">
+      <strong>Permit Package Wizard</strong>
+      <span class="pill" id="pbAhjPill">AHJ: —</span>
+      <span class="pill" id="pbStagePill">Stage: —</span>
+    </div>
+    <div class="right">
+      <button id="pbExportJson" title="Export structure (manifest JSON)">Export Structure</button>
+      <label for="pbImportJson" class="pill" style="cursor:pointer">Import Structure</label>
+      <input id="pbImportJson" type="file" accept="application/json" style="display:none"/>
+      <button id="pbExportPdf" style="border-color:rgba(124,196,255,.45)">Export PDF</button>
+      <button id="pbCloseBtn" style="border-color:rgba(255,157,157,.35)">Close</button>
+    </div>
+  </div>
+
+  <div class="pbGrid">
+    <div class="pbPane">
+      <h4>Project + Options</h4>
+      <div class="pbMeta">
+        <div>
+          <label>Company Name</label>
+          <input id="pbCompany" type="text" placeholder="Company Name"/>
+        </div>
+        <div>
+          <label>Date Prepared</label>
+          <input id="pbDate" type="date"/>
+        </div>
+        <div>
+          <label>Project / Site Name</label>
+          <input id="pbProject" type="text" placeholder="Project Name"/>
+        </div>
+        <div>
+          <label>Permit / Tracking ID</label>
+          <input id="pbPermitId" type="text" placeholder="RADAMPxx-xxxxx"/>
+        </div>
+        <div class="full" style="grid-column:1/-1">
+          <label>Site Address</label>
+          <input id="pbSite" type="text" placeholder="Street, City, ST ZIP"/>
+        </div>
+        <div>
+          <label>Prepared By</label>
+          <input id="pbPreparedBy" type="text" placeholder="Name / Title"/>
+        </div>
+        <div>
+          <label>Cover Notes (optional)</label>
+          <input id="pbCoverNotes" type="text" placeholder="Short cover note"/>
+        </div>
+      </div>
+
+      <div class="softline"></div>
+      <div class="statusbar">
+        <label class="pill"><input id="pbOptDividers" type="checkbox" checked style="margin-right:8px"/>Section divider pages</label>
+        <label class="pill"><input id="pbOptPageNums" type="checkbox" checked style="margin-right:8px"/>Page numbers</label>
+        <label class="pill"><input id="pbOptOverview" type="checkbox" checked style="margin-right:8px"/>Overview page</label>
+        <label class="pill"><input id="pbOptPlaceholders" type="checkbox" checked style="margin-right:8px"/>Auto placeholders for missing required items</label>
+      </div>
+
+      <div class="pbNameBox">
+        <h4 style="margin:0 0 8px">Output Naming</h4>
+        <div class="pbMeta">
+          <div>
+            <label>Naming mode</label>
+            <select id="pbNameMode">
+              <option value="internal">Internal standardized</option>
+              <option value="district">District / AHJ convention</option>
+            </select>
+          </div>
+          <div>
+            <label>Revision (optional)</label>
+            <input id="pbRev" type="text" placeholder="R1 / RevA / 2026-02-26"/>
+          </div>
+          <div>
+            <label>Package label (optional)</label>
+            <input id="pbPkg" type="text" placeholder="permit_package / resubmittal / design_set"/>
+          </div>
+          <div>
+            <label>Date stamp (override, optional)</label>
+            <input id="pbDateStamp" type="text" placeholder="YYYYMMDD (blank = use Date Prepared)"/>
+          </div>
+          <div class="full" style="grid-column:1/-1">
+            <label>Internal filename template</label>
+            <input id="pbInternalTpl" type="text"/>
+            <div class="pbHint">Example: <span class="mono">{project}_{districtId}_{stageId}_{dateYYYYMMDD}{revPart}{pkgPart}.pdf</span></div>
+          </div>
+          <div class="full" style="grid-column:1/-1">
+            <label>District filename template</label>
+            <input id="pbDistrictTpl" type="text"/>
+            <div class="pbHint">This auto-seeds from the district’s naming template when available, but you can override it.</div>
+          </div>
+          <div class="full" style="grid-column:1/-1">
+            <label>Filename preview</label>
+            <div class="pbPreviewName" id="pbFileNamePreview">—</div>
+          </div>
+        </div>
+        <div class="pbHint" style="margin-top:8px">
+          Tokens you can use in templates:
+          <div class="pbTokens">
+            <span class="pbTok">{company}</span><span class="pbTok">{project}</span><span class="pbTok">{permitId}</span><span class="pbTok">{site}</span>
+            <span class="pbTok">{district}</span><span class="pbTok">{districtId}</span><span class="pbTok">{stageId}</span><span class="pbTok">{stageLabel}</span>
+            <span class="pbTok">{date}</span><span class="pbTok">{dateYYYYMMDD}</span><span class="pbTok">{rev}</span><span class="pbTok">{pkg}</span>
+            <span class="pbTok">{revPart}</span><span class="pbTok">{pkgPart}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="softline"></div>
+      <div id="pbGroups"></div>
+    </div>
+
+    <div class="pbPane pbSummary">
+      <h4>Package Preview</h4>
+
+      <div class="small" id="pbCounts">—</div>
+      <div class="softline"></div>
+      <div id="pbPreviewList"></div>
+      <div class="softline"></div>
+      <div class="small" id="pbStatus">Ready.</div>
+    </div>
+  </div>
+</dialog>
+
+
+      <section class="card">
+        <h3 style="margin:0 0 8px;">How to use this file</h3>
+        <ol style="margin:0;padding-left:18px;">
+          <li>Pick the AHJ district section.</li>
+          <li>Open each checklist group and check off what is included in your package.</li>
+          <li>Separate permit/plan routes from annual/ITM/report routes before sending anything.</li>
+          <li>Follow the linked source documents/portals.</li>
+          <li>Use the naming template suggestions before upload.</li>
+          <li>Flag every yellow “Verify” item with the AHJ/plan reviewer.</li>
+        </ol>
+        <p class="footer-note" style="margin-top:10px;">
+          Checkbox progress is saved locally in your browser (localStorage).
+        </p>
+      </section>
+
+      <section class="card">
+        <h3 style="margin:0 0 8px;">Package architecture (recommended master stack)</h3>
+        <div class="naming">
+          <div><strong>Core submission stack:</strong></div>
+          <ol style="margin:6px 0 0;padding-left:18px;">
+            <li>Application / permit intake record</li>
+            <li>Plans / shop drawings (ERCES/BDA/DAS)</li>
+            <li>Engineering calculations + link budget</li>
+            <li>Cutsheets / listings (BDA, DAS, antennas, coax, UPS, etc.)</li>
+            <li>RF grid testing docs (pre/post as required by AHJ)</li>
+            <li>Narrative / compliance matrix (IFC/NFPA + local amendments)</li>
+            <li>Battery/UPS and monitoring details</li>
+            <li>Response letter for resubmittals (when applicable)</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3 style="margin:0 0 8px;">Expansion queue (next districts / recovery audit queue)</h3>
+        <ul class="queue" id="queueList">
+          <li>Poudre Fire Authority (Fort Collins / Loveland area)</li>
+          <li>Aurora Fire Rescue (city + county coordination checks)</li>
+          <li>Colorado Springs Fire Department / Pikes Peak-area AHJs</li>
+          <li>Arapahoe County / municipal overlays (Cherry Hills, Centennial, etc.)</li>
+        </ul>
+        <p class="footer-note">
+          Keep each new district section in the same structure: permit route + report route + codes + checklist + naming + verification gaps.
+        </p>
+      </section>
+
+      <section class="card">
+        <h3 style="margin:0 0 8px;">Hourly QA review rubric</h3>
+        <ul style="margin:0;padding-left:18px;">
+          <li>Do links still resolve?</li>
+          <li>Any code edition dates changed?</li>
+          <li>Any fee schedule effective dates updated?</li>
+          <li>Any “Verify” items now documented online?</li>
+          <li>Does the checklist order match real permit assembly workflow?</li>
+          <li>Do filename examples match AHJ conventions?</li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+
+
+<script src="data/_registry.js"></script>
+<script src="data/denver.js"></script>
+<script src="data/smfr.js"></script>
+<script src="data/wmfr.js"></script>
+<script src="data/nmfrd.js"></script>
+<script src="data/lfra.js"></script>
+<script src="data/arvada.js"></script>
+<script src="data/castle_rock.js"></script>
+<script src="data/colorado_springs.js"></script>
+<script src="data/thornton.js"></script>
+<script src="data/pfa.js"></script>
+<script src="data/wsfr.js"></script>
+<script src="data/erfpd.js"></script>
+<script src="data/grand_junction.js"></script>
+<script src="data/durango.js"></script>
+<script src="data/lakewood.js"></script>
+<script src="data/littleton.js"></script>
+<script src="data/boulder.js"></script>
+<script src="data/fremont.js"></script>
+<script src="data/vail.js"></script>
+	<script src="data/rwbfire.js"></script>
+	<!-- Added districts (compiled from ongoing registry work) -->
+	<script src="data/adams_county.js"></script>
+	<script src="data/jefferson_county.js"></script>
+	<script src="data/larimer_county.js"></script>
+	<script src="data/aurora.js"></script>
+	<script src="data/centennial.js"></script>
+	<script src="data/parker.js"></script>
+	<script src="data/erie.js"></script>
+	<script src="data/brighton.js"></script>
+	<script src="data/commerce_city.js"></script>
+	<script src="data/westminster.js"></script>
+	<script src="data/golden.js"></script>
+	<script src="data/longmont.js"></script>
+	<script src="data/greeley.js"></script>
+	<script src="data/pueblo.js"></script>
+
+	<script src="data/arapahoe_county.js"></script>
+	<script src="data/south_adams_county.js"></script>
+	<script src="data/montrose_fire.js"></script>
+	<script src="data/eagle_river_fire.js"></script>
+<script src="data/_assemble.js"></script>
+<script src="js/report_upload.js"></script>
+<script src="js/guide.js"></script>
+<script src="js/wizard.js"></script>
+</body>
+</html>
